@@ -15,14 +15,14 @@ Title, group members, ...
 Analyse movie plots and try to predict their genres based on contents.
 
 ## Related work
-[Predicting Movie Genre from Movie Title] (https://mohammadkhalifa.github.io/Predicting-Movie-Genre-From-Title/)
-[Movie Genre Classification using Plot] (https://github.com/ishmeetkohli/imdbGenreClassification)
-[Predicting Movie Genres Based on Plot Summaries] (https://arxiv.org/pdf/1801.04813.pdf)
-[Movie Genre Classification from Plot Summaries using Bidirectional LSTM] (https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8334466)
-[Movies’ Genres Classification by Synopsis] (http://cs229.stanford.edu/proj2011/Ho-MoviesGenresClassificationBySynopsis.pdf)
+[Predicting Movie Genre from Movie Title](https://mohammadkhalifa.github.io/Predicting-Movie-Genre-From-Title/)
+[Movie Genre Classification using Plot](https://github.com/ishmeetkohli/imdbGenreClassification)
+[Predicting Movie Genres Based on Plot Summaries](https://arxiv.org/pdf/1801.04813.pdf)
+[Movie Genre Classification from Plot Summaries using Bidirectional LSTM](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8334466)
+[Movies’ Genres Classification by Synopsis](http://cs229.stanford.edu/proj2011/Ho-MoviesGenresClassificationBySynopsis.pdf)
 
 ## Data sets
-[WikiPlots] (https://github.com/markriedl/WikiPlots)
-[Wikipedia Movie Plots] (https://www.kaggle.com/jrobischon/wikipedia-movie-plots)
+[WikiPlots](https://github.com/markriedl/WikiPlots)
+[Wikipedia Movie Plots](https://www.kaggle.com/jrobischon/wikipedia-movie-plots)
 
 ## Methods used
