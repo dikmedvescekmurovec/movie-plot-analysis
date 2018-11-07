@@ -10,3 +10,6 @@ Title, group members, ...
 * A description of tools and resources used. A list of additional linguistic corpora and how it was used to improve results of your algorithm. 
 * Description of your algorithm and results discussion.
 * A URL to a BitBucket/Github repository that contains all the source code to retrieve the reported results. The repository must also contain a README.md file with the instructions of how to build and run the scripts.
+
+## Assignment description
+Analyse movie plots and try to predict their genres based on contents.
