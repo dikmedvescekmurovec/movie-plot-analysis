@@ -8,8 +8,12 @@ from nltk import word_tokenize, sent_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import LancasterStemmer, WordNetLemmatizer
 
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 CSV_FILE_NAME = "wiki_movie_plots_deduped.csv"
+CSV_FILE_SHORT_NAME = "wiki_movie_plots_deduped_short.csv"
+PRE_PROC_FILE = "wiki_movie_plots_preprocessed"
 TITLE_COL = 1
 GENRE_COL = 5
 PLOT_COL = 7
@@ -105,13 +109,16 @@ def stem_and_lemmatize(words):
 """"""""""""""""""""
 class Movie:
 
-    def __init__(self, title, genre, rawPlot):
+    def __init__(self, title, genre, rawPlot="", lemmas=None):
         self.title = title
         self.genre = genre
         self.rawPlot = rawPlot
-        self.lemmas = set(lemmatize_verbs(normalize(nltk.word_tokenize(fix_contractions(rawPlot)))))
+        if lemmas == None:
+            self.lemmas = set(lemmatize_verbs(normalize(nltk.word_tokenize(fix_contractions(rawPlot)))))
+        else:
+            self.lemmas = lemmas
         self.lemmaCount = {}
-        
+
     def countLemmas():
         for lemma in self.lemmas:
             if lemma not in lemmaCount:
@@ -124,24 +131,41 @@ class Movie:
         return False
     def readCSV():
         return False
+
 def extractMovieData(csvRow):
     return Movie(csvRow[TITLE_COL], csvRow[GENRE_COL], csvRow[PLOT_COL])
 
 
 movies = {}
-
+"""""
 with open(CSV_FILE_NAME, encoding="utf8") as moviePlotDataset:
     csv_reader = csv.reader(moviePlotDataset, delimiter=',')
     firstLine = True
     for row in csv_reader:
-        print(row[TITLE_COL])
         if firstLine:
             headers = row
             firstLine = not firstLine
         else:
             movies[row[TITLE_COL]] = extractMovieData(row)
             
-            
+# save pre-processed to file
+with open(PRE_PROC_FILE, 'w', encoding="utf8") as moviePlotDatasetPreProcessed:
+    for title in movies:
+        movie = movies[title]
+        moviePlotDatasetPreProcessed.write(movie.title + "\t" + movie.genre + '\t' + ' '.join(movie.lemmas))
+        moviePlotDatasetPreProcessed.write(" \n")
+    moviePlotDatasetPreProcessed.close()
+    print("finished writing pre processed movies")
+"""""
+
+# read pre-processed to file
+
+with open(PRE_PROC_FILE, encoding="utf8") as file:
+    for line in file:
+        arr = line.split("\t")
+        movies[arr[0]] = Movie(title=arr[0], genre=arr[1], lemmas=set(arr[2].split(" ")))
+
+
 """"""""""""""""""""""""""""""""""""
 """ Nearest neighbours method  """
 """"""""""""""""""""""""""""""""""""
@@ -158,5 +182,18 @@ def nearestNeighbourGenre(movie):
     return closestMovie.genre
 
 
-print(nearestNeighbourGenre(movies["A Christmas Carol"]))
+""""""""""""""""""""""""""""""""""""
+""" kNN method  """
+"""""
+def kNN(train_data):
+    vectorizer = TfidfVectorizer(min_df=2, tokenizer=None, preprocessor=None, stop_words=None)
+    train_data_features = vectorizer.fit_transform(train_data['plot'])
+    train_data_features = train_data_features.toarray()
+    knn_naive_dv = KNeighborsClassifier(n_neighbors=3, n_jobs=1, algorithm='brute', metric='cosine')
+    knn_naive_dv = knn_naive_dv.fit(train_data_features, train_data['tags'])
+
+    return knn_naive_dv;
+"""""
+
+print(nearestNeighbourGenre(movies["House of Mystery"]))
 
