@@ -1,5 +1,5 @@
 import csv
-import re, string, unicodedata
+import re, string, unicodedata, numpy as np
 import nltk
 import contractions
 import inflect
@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from nltk import word_tokenize, sent_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import LancasterStemmer, WordNetLemmatizer
+from sklearn import model_selection
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -163,7 +164,7 @@ with open(PRE_PROC_FILE, 'w', encoding="utf8") as moviePlotDatasetPreProcessed:
 with open(PRE_PROC_FILE, encoding="utf8") as file:
     for line in file:
         arr = line.split("\t")
-        movies[arr[0]] = Movie(title=arr[0], genre=arr[1], lemmas=set(arr[2].split(" ")))
+        movies[arr[0]] = Movie(title=arr[0], genre=arr[1].split(','), lemmas=set(arr[2].split(" ")))
 
 
 """"""""""""""""""""""""""""""""""""
@@ -184,16 +185,36 @@ def nearestNeighbourGenre(movie):
 
 """"""""""""""""""""""""""""""""""""
 """ kNN method  """
-"""""
-def kNN(train_data):
-    vectorizer = TfidfVectorizer(min_df=2, tokenizer=None, preprocessor=None, stop_words=None)
-    train_data_features = vectorizer.fit_transform(train_data['plot'])
-    train_data_features = train_data_features.toarray()
+
+def kNN(train_data, target_data):
     knn_naive_dv = KNeighborsClassifier(n_neighbors=3, n_jobs=1, algorithm='brute', metric='cosine')
-    knn_naive_dv = knn_naive_dv.fit(train_data_features, train_data['tags'])
+    knn_naive_dv = knn_naive_dv.fit(train_data, target_data)
 
-    return knn_naive_dv;
-"""""
+    return knn_naive_dv, vectorizer;
 
-print(nearestNeighbourGenre(movies["House of Mystery"]))
+lemmas = list(map(lambda x: ' '.join(x.lemmas), movies.values()))
+genre = list(map(lambda x: x.genre[0], movies.values()))
+
+unique_genres = set(genre)#[g for sublist in genre for g in sublist]
+
+data_count = len(lemmas)
+
+movies = []
+
+# tukaj sem moral nastavit max_features=10000 ker mi je ce ne metalo out of memory
+vectorizer = TfidfVectorizer(min_df=2, tokenizer=None, preprocessor=None, stop_words=None, max_features=10000 )
+data_features = vectorizer.fit_transform(lemmas)
+data_features = data_features.toarray()
+
+[lemmas_train, lemmas_test, genre_train, genre_test] = model_selection.train_test_split(data_features, genre, test_size=0.3, random_state=66)
+
+knn_model, vec = kNN(lemmas_train, genre_train)
+
+prediction = knn_model.predict(lemmas_test)
+
+same = [i for i, j in zip(prediction, genre_test) if i == j]
+
+accuracy = len(same)/len(genre_test)
+print(accuracy)
+#print(nearestNeighbourGenre(movies["House of Mystery"]))
 
