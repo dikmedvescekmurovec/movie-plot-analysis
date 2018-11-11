@@ -20,6 +20,9 @@ GENRE_COL = 5
 PLOT_COL = 7
 moviePlots = {}
 headers = ""
+DO_PREPROCESSING = False
+
+LIMIT_GENRES = ['war', 'drama', 'comedy', 'thriller', 'action', 'romance', 'science fiction', 'crime', 'fantasy', 'musical', 'horror', 'mystery', 'adventure' ]
 
 """"""""""""""""""""""""""""""""""""
 """ Text preprocessing functions """
@@ -136,35 +139,40 @@ class Movie:
 def extractMovieData(csvRow):
     return Movie(csvRow[TITLE_COL], csvRow[GENRE_COL], csvRow[PLOT_COL])
 
-
 movies = {}
-"""""
-with open(CSV_FILE_NAME, encoding="utf8") as moviePlotDataset:
-    csv_reader = csv.reader(moviePlotDataset, delimiter=',')
-    firstLine = True
-    for row in csv_reader:
-        if firstLine:
-            headers = row
-            firstLine = not firstLine
-        else:
-            movies[row[TITLE_COL]] = extractMovieData(row)
-            
-# save pre-processed to file
-with open(PRE_PROC_FILE, 'w', encoding="utf8") as moviePlotDatasetPreProcessed:
-    for title in movies:
-        movie = movies[title]
-        moviePlotDatasetPreProcessed.write(movie.title + "\t" + movie.genre + '\t' + ' '.join(movie.lemmas))
-        moviePlotDatasetPreProcessed.write(" \n")
-    moviePlotDatasetPreProcessed.close()
-    print("finished writing pre processed movies")
-"""""
 
-# read pre-processed to file
+if DO_PREPROCESSING:
+    with open(CSV_FILE_NAME, encoding="utf8") as moviePlotDataset:
+        csv_reader = csv.reader(moviePlotDataset, delimiter=',')
+        firstLine = True
+        for row in csv_reader:
+            if firstLine:
+                headers = row
+                firstLine = not firstLine
+            else:
+                movies[row[TITLE_COL]] = extractMovieData(row)
 
-with open(PRE_PROC_FILE, encoding="utf8") as file:
-    for line in file:
-        arr = line.split("\t")
-        movies[arr[0]] = Movie(title=arr[0], genre=arr[1].split(','), lemmas=set(arr[2].split(" ")))
+    # save pre-processed to file
+    with open(PRE_PROC_FILE, 'w', encoding="utf8") as moviePlotDatasetPreProcessed:
+        for title in movies:
+            movie = movies[title]
+            moviePlotDatasetPreProcessed.write(movie.title + "\t" + movie.genre + '\t' + ' '.join(movie.lemmas))
+            moviePlotDatasetPreProcessed.write(" \n")
+        moviePlotDatasetPreProcessed.close()
+        print("finished writing pre processed movies")
+else:
+    # read pre-processed to file
+    with open(PRE_PROC_FILE, encoding="utf8") as file:
+        for line in file:
+            arr = line.split("\t")
+            gList = arr[1].split(', / [ ] ;')
+            gx = ''
+            for g in gList:
+                if g in LIMIT_GENRES:
+                    gx = g
+                    break
+            if gx != '':
+                movies[arr[0]] = Movie(title=arr[0], genre=gx, lemmas=set(arr[2].split(" ")))
 
 
 """"""""""""""""""""""""""""""""""""
@@ -182,7 +190,6 @@ def nearestNeighbourGenre(movie):
     print(closestMovie.title)
     return closestMovie.genre
 
-
 """"""""""""""""""""""""""""""""""""
 """ kNN method  """
 
@@ -190,31 +197,30 @@ def kNN(train_data, target_data):
     knn_naive_dv = KNeighborsClassifier(n_neighbors=3, n_jobs=1, algorithm='brute', metric='cosine')
     knn_naive_dv = knn_naive_dv.fit(train_data, target_data)
 
-    return knn_naive_dv, vectorizer;
+    return knn_naive_dv;
 
 lemmas = list(map(lambda x: ' '.join(x.lemmas), movies.values()))
-genre = list(map(lambda x: x.genre[0], movies.values()))
+genre = list(map(lambda x: x.genre, movies.values()))
 
-unique_genres = set(genre)#[g for sublist in genre for g in sublist]
-
+unique_genres = set(genre)
 data_count = len(lemmas)
 
-movies = []
-
-# tukaj sem moral nastavit max_features=10000 ker mi je ce ne metalo out of memory
-vectorizer = TfidfVectorizer(min_df=2, tokenizer=None, preprocessor=None, stop_words=None, max_features=10000 )
+vectorizer = TfidfVectorizer(min_df=2, tokenizer=None, preprocessor=None, stop_words=None, max_features=20000)
 data_features = vectorizer.fit_transform(lemmas)
 data_features = data_features.toarray()
 
 [lemmas_train, lemmas_test, genre_train, genre_test] = model_selection.train_test_split(data_features, genre, test_size=0.3, random_state=66)
 
-knn_model, vec = kNN(lemmas_train, genre_train)
+knn_model = kNN(lemmas_train, genre_train)
 
-prediction = knn_model.predict(lemmas_test)
+train_prediction = knn_model.predict(lemmas_train)
+test_prediction = knn_model.predict(lemmas_test)
 
-same = [i for i, j in zip(prediction, genre_test) if i == j]
+correct_pred_train = [i for i, j in zip(train_prediction, genre_train) if i == j]
+correct_pred_test = [i for i, j in zip(test_prediction, genre_test) if i == j]
 
-accuracy = len(same)/len(genre_test)
-print(accuracy)
-#print(nearestNeighbourGenre(movies["House of Mystery"]))
+accuracy_train = len(correct_pred_train)/len(genre_train)
+accuracy_test = len(correct_pred_test)/len(genre_test)
 
+print("accuracy_train: " + str(accuracy_train))
+print("accuracy_test: " + str(accuracy_test))
