@@ -31,3 +31,9 @@ Analyse movie plots and try to predict their genres based on contents.
 [Wikipedia Movie Plots](https://www.kaggle.com/jrobischon/wikipedia-movie-plots)
 
 ## Methods used
+KNN
+
+## Set up and run
+Install all required libraries (pip install ...)
+[Install required NTLK Data](https://www.nltk.org/data.html) 
+Run
